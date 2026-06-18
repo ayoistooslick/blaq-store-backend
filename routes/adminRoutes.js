@@ -3,6 +3,15 @@ const router = express.Router();
 const User = require('../models/User');
 const { protect, authorize } = require('../middleware/auth');
 
+router.get('/users', protect, authorize('super_admin'), async (req, res) => {
+  try {
+    const users = await User.find().select('-password').sort({ createdAt: -1 });
+    res.json({ count: users.length, users });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 router.get('/pending-sellers', protect, authorize('super_admin'), async (req, res) => {
   try {
     const pendingUsers = await User.find({ sellerRequestStatus: 'pending' }).select('-password');
