@@ -14,7 +14,8 @@ const UserSchema = new mongoose.Schema({
     type: String, 
     enum: ['none', 'pending', 'approved', 'rejected'], 
     default: 'none' 
-  }
+  },
+  avatar: { type: String, default: '' }
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', UserSchema);
