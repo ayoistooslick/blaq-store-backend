@@ -21,6 +21,22 @@ router.get('/pending-sellers', protect, authorize('super_admin'), async (req, re
   }
 });
 
+router.put('/revoke-seller/:id', protect, authorize('super_admin'), async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found.' });
+    if (user.role === 'super_admin') return res.status(400).json({ message: 'Cannot demote a super admin.' });
+    if (user.role !== 'seller') return res.status(400).json({ message: 'User is not a seller.' });
+
+    user.role = 'buyer';
+    user.sellerRequestStatus = 'rejected';
+    await user.save();
+    res.json({ message: `${user.name} has been demoted to buyer.`, user });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 router.put('/review-seller/:id', protect, authorize('super_admin'), async (req, res) => {
   const { action } = req.body;
   try {
