@@ -72,9 +72,9 @@ router.put('/profile', protect, async (req, res) => {
 
     if (name) user.name = name.trim();
     if (email) user.email = email.trim().toLowerCase();
-    if (phoneNumber !== undefined) user.phoneNumber = phoneNumber.trim();
+    if (phoneNumber !== undefined && phoneNumber.trim() !== '') user.phoneNumber = phoneNumber.trim();
 
-    await user.save();
+    await user.save({ validateModifiedOnly: true });
     res.json({
       _id: user._id,
       name: user.name,
