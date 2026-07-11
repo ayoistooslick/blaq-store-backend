@@ -17,7 +17,7 @@ const AccountListingSchema = new mongoose.Schema({
   images: [{ type: String }],
   status: { 
     type: String, 
-    enum: ['available', 'sold'], 
+    enum: ['available', 'sold', 'suspended'], 
     default: 'available' 
   }
 }, { timestamps: true });
