@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
+const AccountListing = require('../models/AccountListing');
 const { protect, authorize } = require('../middleware/auth');
 
 router.get('/users', protect, authorize('super_admin'), async (req, res) => {
@@ -31,6 +32,11 @@ router.put('/revoke-seller/:id', protect, authorize('super_admin'), async (req, 
     user.role = 'buyer';
     user.sellerRequestStatus = 'rejected';
     await user.save();
+    await AccountListing.updateMany(
+      { seller: user._id, status: 'available' },
+      { $set: { status: 'suspended' } }
+    );
+
     res.json({ message: `${user.name} has been demoted to buyer.`, user });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -46,6 +52,10 @@ router.put('/review-seller/:id', protect, authorize('super_admin'), async (req, 
     if (action === 'approve') {
       user.role = 'seller';
       user.sellerRequestStatus = 'approved';
+      await AccountListing.updateMany(
+        { seller: user._id, status: 'suspended' },
+        { $set: { status: 'available' } }
+      );
     } else if (action === 'reject') {
       user.sellerRequestStatus = 'rejected';
     } else {

@@ -16,9 +16,13 @@ const uploadToCloudinary = (file) =>
 router.get('/catalog', async (req, res) => {
   try {
     const catalogItems = await AccountListing.find({ status: 'available' })
-      .populate('seller', 'name phoneNumber')
+      .populate('seller', 'name phoneNumber role')
       .sort({ createdAt: -1 });
-    res.json(catalogItems);
+    const visibleItems = catalogItems.filter(
+      (item) => item.seller && ['seller', 'super_admin'].includes(item.seller.role)
+    );
+
+    res.json(visibleItems);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
