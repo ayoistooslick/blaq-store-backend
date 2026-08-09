@@ -20,14 +20,22 @@ const generateToken = (id) => jwt.sign({ id }, "SUPER_SECRET_BLAQ_KEY_2026", { e
 router.post('/register', async (req, res) => {
   const { name, email, password, phoneNumber } = req.body;
   try {
-    const userExists = await User.findOne({ email });
+    const normalizedEmail = email ? String(email).trim().toLowerCase() : '';
+    if (!normalizedEmail) {
+      return res.status(400).json({ message: 'Email is required.' });
+    }
+
+    const userExists = await User.findOne({ email: normalizedEmail });
     if (userExists) return res.status(400).json({ message: 'User already exists.' });
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await User.create({ name, email, password: hashedPassword, phoneNumber });
+    const user = await User.create({ name, email: normalizedEmail, password: hashedPassword, phoneNumber });
 
     res.status(201).json({ _id: user._id, name: user.name, email: user.email, phoneNumber: user.phoneNumber, role: user.role, sellerRequestStatus: user.sellerRequestStatus, avatar: user.avatar, token: generateToken(user._id) });
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(400).json({ message: 'User already exists.' });
+    }
     res.status(500).json({ error: error.message });
   }
 });
@@ -35,7 +43,11 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   try {
-    const user = await User.findOne({ email });
+    const normalizedEmail = email ? String(email).trim().toLowerCase() : '';
+    if (!normalizedEmail || !password) {
+      return res.status(400).json({ message: 'Email and password are required.' });
+    }
+    const user = await User.findOne({ email: normalizedEmail });
     if (user && (await bcrypt.compare(password, user.password))) {
       res.json({ _id: user._id, name: user.name, email: user.email, phoneNumber: user.phoneNumber, role: user.role, sellerRequestStatus: user.sellerRequestStatus, avatar: user.avatar, token: generateToken(user._id) });
     } else {
@@ -65,13 +77,14 @@ router.put('/profile', protect, async (req, res) => {
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ message: 'User not found.' });
 
-    if (email && email !== user.email) {
-      const taken = await User.findOne({ email });
+    const trimmedEmail = email ? String(email).trim().toLowerCase() : '';
+    if (trimmedEmail && trimmedEmail !== user.email) {
+      const taken = await User.findOne({ email: trimmedEmail });
       if (taken) return res.status(400).json({ message: 'That email is already in use.' });
     }
 
     if (name) user.name = name.trim();
-    if (email) user.email = email.trim().toLowerCase();
+    if (trimmedEmail) user.email = trimmedEmail;
     if (phoneNumber !== undefined && phoneNumber.trim() !== '') user.phoneNumber = phoneNumber.trim();
 
     await user.save({ validateModifiedOnly: true });
