@@ -42,6 +42,14 @@ router.get('/my-listings', protect, authorize('seller', 'super_admin'), async (r
 router.post('/list-account', protect, authorize('seller', 'super_admin'), upload.array('images', 5), async (req, res) => {
   const { gameType, title, description, price, imageUrls } = req.body;
   try {
+    const trimmedTitle = title ? title.trim() : '';
+    const trimmedDescription = description ? description.trim() : '';
+    if (!trimmedTitle) {
+      return res.status(400).json({ message: 'Title is required.' });
+    }
+    if (!trimmedDescription) {
+      return res.status(400).json({ message: 'Description is required.' });
+    }
     let images = [];
 
     if (req.files && req.files.length > 0) {
@@ -54,8 +62,8 @@ router.post('/list-account', protect, authorize('seller', 'super_admin'), upload
     const newListing = await AccountListing.create({
       seller: req.user._id,
       gameType,
-      title,
-      description,
+      title: trimmedTitle,
+      description: trimmedDescription,
       price: Number(price),
       images,
     });

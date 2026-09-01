@@ -23,8 +23,7 @@ const seedAdmin = async () => {
         email: 'storeblaq@gmail.com',
         password: hashedPassword,
         phoneNumber: '+2348142146233',
-        role: 'super_admin',
-        isSellerApproved: true
+        role: 'super_admin'
       });
       console.log('✔ Super Admin seeded successfully with default BLAQSTORE credentials.');
     }

@@ -26,15 +26,24 @@ router.post('/register', async (req, res) => {
     }
 
     const userExists = await User.findOne({ email: normalizedEmail });
-    if (userExists) return res.status(400).json({ message: 'User already exists.' });
+    if (userExists) return res.status(400).json({ message: 'An account with this email already exists.' });
+
+    const trimmedName = name ? name.trim() : '';
+    const trimmedPhone = phoneNumber ? phoneNumber.trim() : '';
+    if (!trimmedName) {
+      return res.status(400).json({ message: 'Name is required.' });
+    }
+    if (!trimmedPhone) {
+      return res.status(400).json({ message: 'Phone number is required.' });
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await User.create({ name, email: normalizedEmail, password: hashedPassword, phoneNumber });
+    const user = await User.create({ name: trimmedName, email: normalizedEmail, password: hashedPassword, phoneNumber: trimmedPhone });
 
     res.status(201).json({ _id: user._id, name: user.name, email: user.email, phoneNumber: user.phoneNumber, role: user.role, sellerRequestStatus: user.sellerRequestStatus, avatar: user.avatar, token: generateToken(user._id) });
   } catch (error) {
     if (error.code === 11000) {
-      return res.status(400).json({ message: 'User already exists.' });
+      return res.status(400).json({ message: 'An account with this email already exists.' });
     }
     res.status(500).json({ error: error.message });
   }
